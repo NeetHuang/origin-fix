@@ -1,0 +1,1 @@
+pyinstaller.exe -F -w gui.py -i ".\\origin.ico"
