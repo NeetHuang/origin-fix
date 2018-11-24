@@ -3,14 +3,14 @@ import _tkinter
 import tkinter
 import tkinter.messagebox as tkmessagebox#访问标准Tk对话框。
 import tkinter.filedialog as tkfiledialog#通用对话框，允许用户指定要打开或保存的文件。
-import shutil,re,os,winreg,base64
+import shutil,re,os,winreg,base64,time
 from icon import img
 
 def fix_origin():
 	env_dist = os.environ
 	origin = env_dist.get('Appdata')  # 获取本地appdata路径
-	Roaming_origin1 = origin + '\Origin'
-	local_origin2 = origin[0:-7] + 'Local\Origin'
+	Roaming_origin1 = origin + '\\Origin'
+	local_origin2 = origin[0:-7] + 'Local\\Origin'
 	if os.path.exists(local_origin2):
 		os.system('taskkill /IM Origin.exe /F')
 		os.system('taskkill /IM OriginWebHelperService.exe /F')
@@ -24,17 +24,16 @@ def fix_origin():
 
 def origin_akamai():
 	aReg = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
-	get_key = winreg.OpenKey(aReg, r'SOFTWARE\WOW6432Node\Electronic Arts\EA Core')  # 获取origin的注册表
+	get_key = winreg.OpenKey(aReg, r'SOFTWARE\\WOW6432Node\\Electronic Arts\\EA Core')  # 获取origin的注册表
 	origin_path = winreg.QueryValueEx(get_key, 'EADM6InstallDir')[0]  # 获取origin的注册表数据
-	EACore=origin_path+"\origin_path"
+	EACore=origin_path+"\\EACore.ini"
 	text='''[connection]
-		EnviromentName=production
-		[Feature]
-		CdnOverride=akamai
-		'''
-	with open(EACore, 'w+') as EA:
+EnviromentName=production
+[Feature]
+CdnOverride=akamai
+'''
+	with open(EACore, 'w') as EA:
 		EA.write(text)
-
 
 	hosts = ['219.76.10.192 origin-a.akamaihd.net', '104.76.93.69  www.origin.com']
 	if os.path.isfile('C:/Windows/System32/drivers/etc/hosts'):
@@ -55,18 +54,27 @@ def origin_akamai():
 
 def file_path():
 	path_ = tkfiledialog.askdirectory(initialdir='C:/')
-	print(path_)
+	# print(path_)
 	tkinter.Label(text="你的安装位置-"+path_).place(x=30,y=130,anchor='w')
 	path = path_
 	game_path = '"'+path_+'/__Installer/Touchup.exe"'
+	check = path_+'/__Installer/Touchup.exe'
 	command_s = game_path+' install -locale {zh_TW} -installPath "{%s}" -autologging -startmenuIcon=1 -desktopIcon=1' %path
-	print(command_s)
-	if os.path.isfile(game_path):
-		try:
-			command_fix = os.system(command_s)
-			tkmessagebox.showinfo(title='成功',message='修复完成')
-		except:
-			tkmessagebox.showinfo(title='失败',message="请检查权限或者文件是否缺失")
+	# print(command_s)
+	if os.path.isfile(check):
+			env_dist = os.environ
+			temp = env_dist.get('temp')
+			try:
+				with open(temp+'/regfix.bat', 'w') as reg:
+					reg.write("@echo off\n"+command_s+"exit")
+				os.system(temp+'\\regfix.bat')
+				time.sleep(2)
+				tkmessagebox.showinfo(title='成功',message='修复完成')
+			except:
+				tkmessagebox.showinfo(title='失败',message='请使用管理员权限打开或者检查文件')
+	else:
+		tkmessagebox.showinfo(title='提示',message='请检查是否为游戏目录且存在__Installer目录')
+
 def main():
 	root = tkinter.Tk()
 	fm1 = tkinter.Frame()
@@ -80,7 +88,7 @@ def main():
 	LabelA.place(x=30,y=60,anchor='w')
 	A.place(x=200,y=60,anchor='w')
 
-	LabelB =tkinter.Label(text='origin加速')
+	LabelB =tkinter.Label(text='origin加速(需要管理员权限)')
 	B = tkinter.Button(text ="加速", command = origin_akamai,height=1,width = 10)
 	LabelB.place(x=30,y=100,anchor='w')
 	B.place(x=200,y=100,anchor='w')
@@ -92,7 +100,7 @@ def main():
 	fm2.pack()
 
 
-	root.title('origin多功能修复工具')#标题
+	root.title('origin多功能修复工具V1.1')#标题
 	root.geometry('300x200')#窗体大小
 	root.resizable(False, False)#固定窗体
 	tmp = open("tmp.ico","wb+")
