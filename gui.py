@@ -5,22 +5,66 @@ import tkinter.messagebox as tkmessagebox#访问标准Tk对话框。
 import tkinter.filedialog as tkfiledialog#通用对话框，允许用户指定要打开或保存的文件。
 import shutil,re,os,winreg,base64,time
 from icon import img
+def  del_file(path):
+	for i in os.listdir(path):
+		path_file = os.path.join(path,i)
+		if os.path.isfile(path_file):
+			try:
+				os.remove(path_file)
+			except:
+				continue
+		else:
+			del_file(path_file)
 
-def fix_origin():
+def fix_origin_A():
 	env_dist = os.environ
 	origin = env_dist.get('Appdata')  # 获取本地appdata路径
 	Roaming_origin1 = origin + '\\Origin'
 	local_origin2 = origin[0:-7] + 'Local\\Origin'
 	if os.path.exists(local_origin2):
-		os.system('taskkill /IM Origin.exe /F')
-		os.system('taskkill /IM OriginWebHelperService.exe /F')
-		os.system('taskkill /IM QtWebEngineProcess.exe /F')
-		shutil.rmtree(local_origin2) ####优先删除这个尝试#####
+		os.system('taskkill /F /IM Origin.exe /T | taskkill /F /IM OriginWebHelperService.exe /T | taskkill /F /IM QtWebEngineProcess.exe /T | exit')
+		try:
+			shutil.rmtree(local_origin2) ####优先删除这个尝试#####
+		except:
+			del_file(local_origin2)
 		tkmessagebox.showinfo(title='成功',message='修复完成')
 	else:
-		tkmessagebox.showinfo(title='警告',message='目录未找到或已清理')
-	# if os.path.exists(Roaming_origin1):
-	#     os.removedirs(Roaming_origin1)
+		tkmessagebox.showinfo(title='警告',message='目录未找到或已修复过')
+
+def fix_origin_B():
+	env_dist = os.environ
+	origin = env_dist.get('Appdata')  # 获取本地appdata路径
+	temp = env_dist.get('temp')
+	Roaming_origin1 = origin + '\\Origin'
+	local_origin2 = origin[0:-7] + 'Local\\Origin'
+	set_origin3 = "C:\\ProgramData\\Origin"
+	if os.path.exists(local_origin2):
+		os.system('taskkill /F /IM explorer.exe | taskkill /F /IM Origin.exe /T | taskkill /F /IM OriginWebHelperService.exe /T | taskkill /F /IM QtWebEngineProcess.exe /T | exit')
+		# os.system("tskill  Origin | tskill  OriginWebHelperService | tskill  QtWebEngineProcess | exit")
+		command_a = '''
+		attrib -r %APPDATA%\Origin /s
+		Takeown /F %APPDATA%\Origin /r /d y
+		cacls %APPDATA%\Origin /t /e /g Administrators:F
+		rd /s /q %APPDATA%\Origin
+		Takeown /F C:\ProgramData\Origin /r /d y
+		cacls C:\ProgramData\Origin /t /e /g Administrators:F
+		rd /s /q C:\ProgramData\Origin
+		Takeown /F %TEMP% /r /d y
+		cacls %TEMP% /t /e /g Administrators:F
+		rd /s /q %TEMP%
+		del /f /s /q %0
+		'''
+		try:
+			with open(temp+"/fixall.bat", 'w') as reg:
+					reg.write("@echo off\n"+command_a)
+					os.system(temp+"/fixall.bat")
+					time.sleep(5)
+					os.system('taskkill /F /IM cmd.exe | taskkill /F /IM conhost.exe | explorer.exe ')
+					tkmessagebox.showinfo(title='成功',message='最终修复完成,如果没有桌面请注销或重启')
+		except:
+			tkmessagebox.showinfo(title='警告',message='权限不足或BUG')
+	else:
+		tkmessagebox.showinfo(title='警告',message='目录未找到或已修复过')
 
 def origin_akamai():
 	aReg = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
@@ -35,7 +79,7 @@ CdnOverride=akamai
 	with open(EACore, 'w') as EA:
 		EA.write(text)
 
-	hosts = ['219.76.10.192 origin-a.akamaihd.net', '104.76.93.69  www.origin.com']
+	hosts = ['184.28.218.98 origin-a.akamaihd.net', '23.198.105.69  www.origin.com']
 	if os.path.isfile('C:/Windows/System32/drivers/etc/hosts'):
 		with open(r'C:/Windows/System32/drivers/etc/hosts', 'r+') as hos:
 			if re.search(r"akamai",hos.read()):
@@ -55,7 +99,7 @@ CdnOverride=akamai
 def file_path():
 	path_ = tkfiledialog.askdirectory(initialdir='C:/')
 	# print(path_)
-	tkinter.Label(text="你的安装位置-"+path_).place(x=30,y=130,anchor='w')
+	tkinter.Label(text="你的安装位置-"+path_).place(x=35,y=170,anchor='w')
 	path = path_
 	game_path = '"'+path_+'/__Installer/Touchup.exe"'
 	check = path_+'/__Installer/Touchup.exe'
@@ -84,24 +128,30 @@ def main():
 
 	fm2 = tkinter.Frame()
 	LabelA=tkinter.Label(text='修复origin发生了一些问题')
-	A = tkinter.Button(text ="修复", command = fix_origin,height=1,width = 10)
-	LabelA.place(x=30,y=60,anchor='w')
-	A.place(x=200,y=60,anchor='w')
+	A = tkinter.Button(text ="修复", command = fix_origin_A,height=1,width = 10)
+	LabelA.place(x=35,y=60,anchor='w')
+	A.place(x=210,y=60,anchor='w')
 
-	LabelB =tkinter.Label(text='origin加速(需要管理员权限)')
-	B = tkinter.Button(text ="加速", command = origin_akamai,height=1,width = 10)
-	LabelB.place(x=30,y=100,anchor='w')
-	B.place(x=200,y=100,anchor='w')
+	LabelB=tkinter.Label(text='最终修复方案[需要管理员权限]')
+	B = tkinter.Button(text ="修复", command = fix_origin_B,height=1,width = 10)
+	LabelB.place(x=35,y=100,anchor='w')
+	B.place(x=210,y=100,anchor='w')
 
-	LabelC=tkinter.Label(text='游戏位置修改后修复')
-	C = tkinter.Button(text ="选择游戏目录", command = file_path,height=1,width = 15)
-	LabelC.place(x=30,y=160,anchor='w')
-	C.place(x=180,y=160,anchor='w')
+	LabelC =tkinter.Label(text='origin加速[需要管理员权限]')
+	C = tkinter.Button(text ="加速", command = origin_akamai,height=1,width = 10)
+	LabelC.place(x=35,y=140,anchor='w')
+	C.place(x=210,y=140,anchor='w')
+
+	LabelD=tkinter.Label(text='游戏位置修改后修复')
+	D = tkinter.Button(text ="选择游戏目录", command = file_path,height=1,width = 15)
+	LabelD.place(x=35,y=200,anchor='w')
+	D.place(x=190,y=200,anchor='w')
+
 	fm2.pack()
 
 
-	root.title('origin多功能修复工具V1.1')#标题
-	root.geometry('300x200')#窗体大小
+	root.title('origin多功能修复工具V2.0')#标题
+	root.geometry('320x220')#窗体大小
 	root.resizable(False, False)#固定窗体
 	tmp = open("tmp.ico","wb+")
 	tmp.write(base64.b64decode(img))
