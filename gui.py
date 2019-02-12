@@ -104,14 +104,28 @@ def file_path():
 	game_path = '"'+path_+'/__Installer/Touchup.exe"'
 	check = path_+'/__Installer/Touchup.exe'
 	command_s = game_path+' install -locale {zh_TW} -installPath "{%s}" -autologging -startmenuIcon=1 -desktopIcon=1' %path
-	# print(command_s)
+	apex_path = path_ + '/__Installer/customcomponent/EasyAntiCheat/'
+	apex = apex_path + 'EasyAntiCheat_Setup.exe'
+	apex_command = '"' + apex + '" install 154 -console'
+	# print(apex)
+	# print(apex_command)
 	if os.path.isfile(check):
 			env_dist = os.environ
 			temp = env_dist.get('temp')
 			try:
-				with open(temp+'/regfix.bat', 'w') as reg:
-					reg.write("@echo off\n"+command_s+"exit")
-				os.system(temp+'\\regfix.bat')
+				if os.path.isfile(apex):
+					# print("APEX")
+					with open(temp+'/regapex.bat', 'w') as reg:
+						reg.write(apex_command)
+					os.system(temp+'\\regapex.bat')
+					with open(temp+'/regfix.bat', 'w') as reg:
+						reg.write(command_s)
+					os.system(temp+'\\regfix.bat')
+				else:
+					# print("NO-APEX")
+					with open(temp+'/regfix.bat', 'w') as reg:
+						reg.write(command_s)
+					os.system(temp+'\\regfix.bat')
 				time.sleep(2)
 				tkmessagebox.showinfo(title='成功',message='修复完成')
 			except:
@@ -132,12 +146,12 @@ def main():
 	LabelA.place(x=35,y=60,anchor='w')
 	A.place(x=210,y=60,anchor='w')
 
-	LabelB=tkinter.Label(text='最终修复方案[需要管理员权限]')
+	LabelB=tkinter.Label(text='最终修复方案')
 	B = tkinter.Button(text ="修复", command = fix_origin_B,height=1,width = 10)
 	LabelB.place(x=35,y=100,anchor='w')
 	B.place(x=210,y=100,anchor='w')
 
-	LabelC =tkinter.Label(text='origin加速[需要管理员权限]')
+	LabelC =tkinter.Label(text='origin加速')
 	C = tkinter.Button(text ="加速", command = origin_akamai,height=1,width = 10)
 	LabelC.place(x=35,y=140,anchor='w')
 	C.place(x=210,y=140,anchor='w')
@@ -147,10 +161,11 @@ def main():
 	LabelD.place(x=35,y=200,anchor='w')
 	D.place(x=190,y=200,anchor='w')
 
+	tkmessagebox.showinfo(title='注意',message='请使用管理员权限打开,已使用管理员打开请无视')
 	fm2.pack()
 
 
-	root.title('origin多功能修复工具V2.0')#标题
+	root.title('origin多功能修复工具V2.1')#标题
 	root.geometry('320x220')#窗体大小
 	root.resizable(False, False)#固定窗体
 	tmp = open("tmp.ico","wb+")
